@@ -1,4 +1,4 @@
-package com.agilogy.timetracking
+package com.agilogy.timetracking.infrastructure
 
 import com.agilogy.timetracking.domain.DeveloperProject
 import com.agilogy.timetracking.domain.Hours
@@ -17,11 +17,11 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
         state.addAll(initialState)
     }
 
-    override fun saveTimeEntries(timeEntries: List<TimeEntry>) {
+    override suspend fun saveTimeEntries(timeEntries: List<TimeEntry>) {
         state.addAll(timeEntries)
     }
 
-    override fun getDeveloperHours(start: Instant, end: Instant): Map<DeveloperProject, Hours>  =
+    override suspend fun getDeveloperHours(start: Instant, end: Instant): Map<DeveloperProject, Hours>  =
         state.map { timeEntry ->
             val s = max(start.toEpochMilli(), timeEntry.start.toEpochMilli())
             val e = min(end.toEpochMilli(), timeEntry.end.toEpochMilli())

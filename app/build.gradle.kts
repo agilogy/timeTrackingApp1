@@ -1,8 +1,10 @@
 import Dependencies.arrowCore
+import Dependencies.arrowFxCoroutines
+import Dependencies.hikariCp
 import Dependencies.kotestRunnerJunit
 import Dependencies.kotlinXCoroutinesCore
 import Dependencies.kotlinXSerializationJson
-
+import Dependencies.postgresql
 
 plugins {
     kotlin("jvm") version "1.8.10"
@@ -16,18 +18,27 @@ repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
-val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs += "-Xcontext-receivers"
+    }
+}
 
-compileKotlin.kotlinOptions.freeCompilerArgs += "-Xcontext-receivers"
+kotlin {
+    jvmToolchain(11)
+}
 
 dependencies {
 
     implementation(arrowCore)
+    implementation(arrowFxCoroutines)
     implementation(kotlinXSerializationJson)
     implementation(kotlinXCoroutinesCore)
+    implementation(postgresql)
+    implementation(hikariCp)
     testImplementation(kotestRunnerJunit)
 }
 
-tasks.withType<Test>().configureEach {
+tasks.test {
     useJUnitPlatform()
 }

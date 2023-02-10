@@ -4,8 +4,8 @@ import java.time.Instant
 
 interface TimeTrackingApp {
 
-    fun saveTimeEntries(developer: String, timeEntries: List<DeveloperTimeEntry>)
-    fun getDeveloperHours(start: Instant, end: Instant): Map<DeveloperProject, Hours>
+    suspend fun saveTimeEntries(developer: String, timeEntries: List<DeveloperTimeEntry>)
+    suspend fun getDeveloperHours(start: Instant, end: Instant): Map<DeveloperProject, Hours>
 }
 
 @JvmInline

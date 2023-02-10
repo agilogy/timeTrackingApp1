@@ -1,6 +1,6 @@
-package com.agilogy.timetracking
+package com.agilogy.timetracking.domain
 
-import com.agilogy.timetracking.domain.*
+import com.agilogy.timetracking.infrastructure.InMemoryTimeEntriesRepository
 import io.kotest.core.spec.style.FunSpec
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.Instant
@@ -25,10 +25,7 @@ class TimeTrackingAppTest : FunSpec() {
         }
 
         test("Get hours per developer"){
-
-            val timeEntriesRepository = InMemoryTimeEntriesRepository(
-                    listOf(TimeEntry(developer, project, start, now))
-            )
+            val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start, now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val result = app.getDeveloperHours(start, now)
             val expected = mapOf(DeveloperProject(developer, project) to Hours(hours))

@@ -4,6 +4,6 @@ import java.time.Instant
 
 interface TimeEntriesRepository {
 
-    fun saveTimeEntries(timeEntries: List<TimeEntry>)
-    fun getDeveloperHours(start: Instant, end: Instant): Map<DeveloperProject, Hours>
+    suspend fun saveTimeEntries(timeEntries: List<TimeEntry>)
+    suspend fun getDeveloperHours(start: Instant, end: Instant): Map<DeveloperProject, Hours>
 }
