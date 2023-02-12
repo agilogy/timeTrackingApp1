@@ -19,7 +19,8 @@ import javax.sql.DataSource
 class TimeEntriesRepositoryTest : FunSpec() {
 
     private suspend fun <A> withTestDataSource(database: String? = "test", f: suspend (DataSource) -> A) =
-        HikariCp.dataSource("postgres", "postgres", "localhost", database = database).use { dataSource -> f(dataSource) }
+        HikariCp.dataSource("jdbc:postgresql://localhost/${database ?: ""}", "postgres", "postgres").use {
+                dataSource -> f(dataSource) }
 
     private suspend fun <A> withPostgresTestRepo(f: suspend (TimeEntriesRepository) -> A) =
         withTestDataSource { f(PostgresTimeEntriesRepository(it)) }
