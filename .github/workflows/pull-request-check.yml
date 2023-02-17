@@ -1,0 +1,16 @@
+name: pull-request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: test
+        run: |
+          ./gradlew test
