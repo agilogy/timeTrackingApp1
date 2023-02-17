@@ -10,11 +10,20 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: isbang/compose-action@v1.4.1
+      - name: Checkout project sources
+        uses: actions/checkout@v2
+      - name: Docker Compose up
+        uses: isbang/compose-action@v1.4.1
         with:
           compose-file: "./docker-compose.yml"
           down-flags: "--volumes"
-      - name: test
-        run: |
-          ./gradlew test
+      # https://github.com/gradle/gradle-build-action
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Gradle Build
+        run: ./gradlew build
