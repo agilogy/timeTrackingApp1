@@ -6,5 +6,24 @@
  * This project uses @Incubating APIs which are subject to change.
  */
 
+plugins {
+    id("com.gradle.enterprise") version("3.9")
+}
+
+gradleEnterprise {
+    if (System.getenv("CI") != null) {
+        buildScan {
+            publishAlways()
+            termsOfServiceUrl = "https://gradle.com/terms-of-service"
+            termsOfServiceAgree = "yes"
+        }
+    }
+}
+
+
+
 rootProject.name = "timeTrackingApp"
 include("app")
+
+
+
