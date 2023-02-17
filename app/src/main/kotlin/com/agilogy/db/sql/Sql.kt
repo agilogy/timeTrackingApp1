@@ -21,7 +21,7 @@ object Sql {
     context(Connection)
     private suspend fun <A> preparedStatement(sql: String, vararg params: SqlParameter, f: (PreparedStatement) -> A): A =
         this@Connection.prepareStatement(sql).use { statement ->
-            params.forEachIndexed { pos, param -> param(statement, pos + 1) }
+            setParameters(statement, *params)
             f(statement)
         }
 
@@ -45,21 +45,19 @@ object Sql {
     context(Connection)
     suspend fun <A> select(sql: String, vararg params: SqlParameter, reader: (ResultSetView) -> A): List<A> =
         preparedStatement(sql, *params) { ps ->
-            setParameters(ps, *params)
             ps.executeQuery().use { resultSet ->
-                sequence {
-                    val resultSetView = ResultSetView(resultSet)
-                    while (resultSet.next()) {
-                        yield(reader(resultSetView))
-                    }
-                }.toList()
+                val res = mutableListOf<A>()
+                val resultSetView = ResultSetView(resultSet)
+                while (resultSet.next()) {
+                    res.add(reader(resultSetView))
+                }
+                res
             }
         }
 
     context(Connection)
     suspend fun <A> selectOne(sql: String, vararg params: SqlParameter, reader: (ResultSetView) -> A): A? =
         preparedStatement(sql, *params) { ps ->
-            setParameters(ps, *params)
             ps.executeQuery().use { resultSet ->
                 val resultSetView = ResultSetView(resultSet)
                 if (resultSet.next()) {
@@ -89,8 +87,4 @@ object Sql {
         with(BatchUpdate(ps)) { f(this) }
         ps.executeBatch().toList()
     }
-
-
-
-
 }

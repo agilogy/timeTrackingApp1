@@ -9,6 +9,7 @@ import com.agilogy.timetracking.domain.sum
 import com.agilogy.timetracking.domain.toInstantRange
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList()) : TimeEntriesRepository {
 
@@ -39,7 +40,7 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
             .filter { it.developer == developer }
             .filterIsIn(dateRange.toInstantRange())
             .groupBy({ it.localDate to it.project }) { it.duration }
-            .mapValues { Hours(it.value.sum().inWholeHours.toInt()) }
+            .mapValues { Hours(((it.value.sum().inWholeSeconds) / 3600.0).roundToInt()) }
             .map { (k, v) -> Triple(k.first, k.second, v) }
 
     fun getState(): List<TimeEntry> = state.toList()

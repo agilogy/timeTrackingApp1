@@ -43,7 +43,7 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
         select(sql, range.start.param, range.endInclusive.param) {
             DeveloperProject(it.string(1)!!, it.string(2)!!) to Hours((it.long(3)!! / 3_600).toInt())
         }
-    }.toMap()
+        }.toMap()
 
     override suspend fun getDeveloperHoursByProjectAndDate(
         developer: String,
