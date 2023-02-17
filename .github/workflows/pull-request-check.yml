@@ -17,6 +17,12 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
           down-flags: "--volumes"
+      # https://github.com/gradle/gradle-build-action
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Gradle Build
