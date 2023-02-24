@@ -15,6 +15,7 @@ import com.agilogy.timetracking.domain.TimeEntry
 import java.time.Instant
 import java.time.LocalDate
 import javax.sql.DataSource
+import kotlin.math.ceil
 
 class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEntriesRepository {
 
@@ -49,13 +50,13 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
     }
 
     override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours> = dataSource.sql {
-        val sql = """select developer, project, extract(EPOCH from sum("end" - start)) 
+        val sql = """select developer, project, extract(EPOCH from sum(least("end", ?) - greatest(start, ?))) 
             |from time_entries 
             |where "end" > ? and start < ?
             |group by developer, project""".trimMargin()
-        select(sql, range.start.param, range.endInclusive.param) {
-            (it.developer(1)!! to it.project(2)!!) to Hours((it.long(3)!! / 3_600).toInt())
-        }.toMap()
+        select(sql, range.endInclusive.param, range.start.param, range.start.param, range.endInclusive.param) {
+            (it.developer(1)!! to it.project(2)!!) to Hours(ceil(it.long(3)!! / 3_600.0).toInt())
+        }.toMap().filterValues { it.value > 0 }
     }
 
     override suspend fun getDeveloperHoursByProjectAndDate(
