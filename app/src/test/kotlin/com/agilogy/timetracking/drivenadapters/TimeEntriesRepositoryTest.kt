@@ -5,8 +5,9 @@ import com.agilogy.db.hikari.HikariCp
 import com.agilogy.db.postgresql.PostgreSql
 import com.agilogy.db.sql.Sql.sql
 import com.agilogy.db.sql.Sql.update
-import com.agilogy.timetracking.domain.DeveloperProject
+import com.agilogy.timetracking.domain.Developer
 import com.agilogy.timetracking.domain.Hours
+import com.agilogy.timetracking.domain.Project
 import com.agilogy.timetracking.domain.TimeEntriesRepository
 import com.agilogy.timetracking.domain.TimeEntry
 import io.kotest.core.spec.style.FunSpec
@@ -46,6 +47,11 @@ class TimeEntriesRepositoryTest : FunSpec() {
 
     init {
 
+        val d1 = Developer("d1")
+        val d2 = Developer("d2")
+        val p = Project("p")
+        val p2 = Project("p2")
+
         beforeTest {
             withTestDataSource(null) { dataSource ->
                 kotlin.runCatching { dataSource.sql { update("create database test") } }
@@ -75,15 +81,15 @@ class TimeEntriesRepositoryTest : FunSpec() {
             val testDay = date(1)
             repo.saveTimeEntries(
                 listOf(
-                    TimeEntry("d1", "p", timePeriod(1, 9, 4)),
-                    TimeEntry("d1", "p", timePeriod(1, 14, 3)),
-                    TimeEntry("d2", "p", timePeriod(1, 10, 3)),
+                    TimeEntry(d1, p, timePeriod(1, 9, 4)),
+                    TimeEntry(d1, p, timePeriod(1, 14, 3)),
+                    TimeEntry(d2, p, timePeriod(1, 10, 3)),
                 )
             )
             assertEquals(
                 mapOf(
-                    DeveloperProject("d1", "p") to Hours(7),
-                    DeveloperProject("d2", "p") to Hours(3),
+                    Pair(d1, p) to Hours(7),
+                    Pair(d2, p) to Hours(3),
                 ),
                 repo.getHoursByDeveloperAndProject(testDay.toLocalInstant()..testDay.plusDays(1).toLocalInstant())
             )
@@ -93,20 +99,20 @@ class TimeEntriesRepositoryTest : FunSpec() {
         test("getDeveloperHoursByProjectAndDate") { repo ->
             repo.saveTimeEntries(
                 listOf(
-                    TimeEntry("d1", "p", timePeriod(1, 9, 1)),
-                    TimeEntry("d1", "p", timePeriod(1, 11, 2)),
-                    TimeEntry("d1", "p2", timePeriod(1, 14, 4)),
-                    TimeEntry("d1", "p", timePeriod(2, 8, 6)),
+                    TimeEntry(d1, p, timePeriod(1, 9, 1)),
+                    TimeEntry(d1, p, timePeriod(1, 11, 2)),
+                    TimeEntry(d1, p2, timePeriod(1, 14, 4)),
+                    TimeEntry(d1, p, timePeriod(2, 8, 6)),
                 )
             )
 
             assertEquals(
                 listOf(
-                    Triple(date(1), "p", Hours(3)),
-                    Triple(date(1), "p2", Hours(4)),
-                    Triple(date(2), "p", Hours(6))
+                    Triple(date(1), p, Hours(3)),
+                    Triple(date(1), p2, Hours(4)),
+                    Triple(date(2), p, Hours(6))
                 ),
-                repo.getDeveloperHoursByProjectAndDate("d1", date(1)..date(2))
+                repo.getDeveloperHoursByProjectAndDate(d1, date(1)..date(2))
             )
 
         }

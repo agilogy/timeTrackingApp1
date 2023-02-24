@@ -1,19 +1,27 @@
 package com.agilogy.timetracking.drivenadapters
 
-import com.agilogy.timetracking.domain.DeveloperProject
-import com.agilogy.timetracking.domain.Hours
-import com.agilogy.timetracking.domain.TimeEntriesRepository
-import com.agilogy.timetracking.domain.TimeEntry
+import com.agilogy.db.sql.ResultSetView
 import com.agilogy.db.sql.Sql.batchUpdate
 import com.agilogy.db.sql.Sql.select
 import com.agilogy.db.sql.Sql.sql
+import com.agilogy.db.sql.SqlParameter
 import com.agilogy.db.sql.param
-import com.agilogy.timetracking.domain.toInstantRange
+import com.agilogy.time.toInstantRange
+import com.agilogy.timetracking.domain.Developer
+import com.agilogy.timetracking.domain.Hours
+import com.agilogy.timetracking.domain.Project
+import com.agilogy.timetracking.domain.TimeEntriesRepository
+import com.agilogy.timetracking.domain.TimeEntry
 import java.time.Instant
 import java.time.LocalDate
 import javax.sql.DataSource
 
 class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEntriesRepository {
+
+    private val Developer.param: SqlParameter get() = name.param
+    private val Project.param: SqlParameter get() = name.param
+    private fun ResultSetView.developer(columnIndex: Int): Developer? = string(columnIndex)?.let { Developer(it) }
+    private fun ResultSetView.project(columnIndex: Int): Project? = string(columnIndex)?.let { Project(it) }
 
     companion object {
         val dbMigrations = listOf(
@@ -30,34 +38,48 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
     override suspend fun saveTimeEntries(timeEntries: List<TimeEntry>) = dataSource.sql {
         val sql = """insert into time_entries(developer, project, start, "end") values (?, ?, ?, ?)"""
         batchUpdate(sql) {
-            timeEntries.forEach { addBatch(it.developer.param, it.project.param, it.range.start.param, it.range.endInclusive.param) }
+            timeEntries.forEach {
+                addBatch(
+                    it.developer.param, it.project.param, it.range.start.param, it.range.endInclusive
+                        .param
+                )
+            }
         }
         Unit
     }
 
-    override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<DeveloperProject, Hours> = dataSource.sql {
+    override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours> = dataSource.sql {
         val sql = """select developer, project, extract(EPOCH from sum("end" - start)) 
             |from time_entries 
             |where "end" > ? and start < ?
             |group by developer, project""".trimMargin()
         select(sql, range.start.param, range.endInclusive.param) {
-            DeveloperProject(it.string(1)!!, it.string(2)!!) to Hours((it.long(3)!! / 3_600).toInt())
-        }
+            (it.developer(1)!! to it.project(2)!!) to Hours((it.long(3)!! / 3_600).toInt())
         }.toMap()
+    }
 
     override suspend fun getDeveloperHoursByProjectAndDate(
-        developer: String,
-        dateRange: ClosedRange<LocalDate>,
-    ): List<Triple<LocalDate, String, Hours>> = dataSource.sql {
+        developer: Developer,
+        dateRange: ClosedRange<LocalDate>
+    ): List<Triple<LocalDate, Project, Hours>> = dataSource.sql {
         val instantRange = dateRange.toInstantRange()
         val sql = """select date(start at time zone 'CEST'), project, extract(EPOCH from sum("end" - start)) 
             |from time_entries 
-            |where "start" > ? and start < ?
+            |where "start" > ? and start < ? and developer = ?
             |group by date(start at time zone 'CEST'), project
             |order by date(start at time zone 'CEST'), project
             |""".trimMargin()
-        select(sql, instantRange.start.param, instantRange.endInclusive.param) {
-            Triple(LocalDate.parse(it.string(1)!!), it.string(2)!!, Hours((it.long(3)!! / 3_600).toInt()))
+        select(sql, instantRange.start.param, instantRange.endInclusive.param, developer.param) {
+            Triple(LocalDate.parse(it.string(1)!!), it.project(2)!!, Hours((it.long(3)!! / 3_600).toInt()))
+        }
+    }
+
+    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry> = dataSource.sql {
+        val sql = """select developer, project, start, "end" 
+            |from time_entries 
+            |where "end" > ? and start < ?""".trimMargin()
+        select(sql, timeRange.start.param, timeRange.endInclusive.param) {
+            TimeEntry(it.developer(1)!!, it.project(2)!!, it.timestamp(3)!!..it.timestamp(4)!!)
         }
     }
 }

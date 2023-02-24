@@ -10,14 +10,14 @@ class TimeTrackingAppTest : FunSpec() {
         val now = Instant.now()
         val hours = 1
         val start = now.minusSeconds(hours * 3600L)
-        val developer = "John"
-        val project = "Acme Inc."
+        val developer = Developer("John")
+        val project = Project("Acme Inc.")
 
 
         test("Save time entries") {
             val timeEntriesRepository = InMemoryTimeEntriesRepository()
             val app = TimeTrackingAppPrd(timeEntriesRepository)
-            val developerTimeEntries = listOf(DeveloperTimeEntry(project, start..now))
+            val developerTimeEntries = listOf(project to start..now)
             app.saveTimeEntries(developer, developerTimeEntries)
             val expected = listOf(TimeEntry(developer, project, start..now))
             assertEquals(expected, timeEntriesRepository.getState())
@@ -28,7 +28,7 @@ class TimeTrackingAppTest : FunSpec() {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val result = app.getDeveloperHours(start..now)
-            val expected = mapOf(DeveloperProject(developer, project) to Hours(hours))
+            val expected = mapOf((developer to project) to Hours(hours))
             assertEquals(expected, result)
         }
 
@@ -36,14 +36,14 @@ class TimeTrackingAppTest : FunSpec() {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val result = app.getDeveloperHours(start.plusSeconds(900)..now.minusSeconds(900))
-            val expected = mapOf(DeveloperProject(developer, project) to Hours(1))
+            val expected = mapOf((developer to project) to Hours(1))
             assertEquals(expected, result)
         }
         test("Get hours per developer when range is bigger than the developer hours") {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val result = app.getDeveloperHours(start.minusSeconds(7200L)..now.plusSeconds(7200L))
-            val expected = mapOf(DeveloperProject(developer, project) to Hours(1))
+            val expected = mapOf((developer to project) to Hours(1))
             assertEquals(expected, result)
         }
         xtest("Get hours per developer when range is outside the developer hours") {
@@ -51,7 +51,7 @@ class TimeTrackingAppTest : FunSpec() {
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val resultLeft = app.getDeveloperHours(start.minusSeconds(3600L)..now.minusSeconds(7200L))
             val resultRight = app.getDeveloperHours(start.plusSeconds(7200L)..now.plusSeconds(3600L))
-            val expected = mapOf(DeveloperProject(developer, project) to Hours(0))
+            val expected = mapOf((developer to project) to Hours(0))
             assertEquals(expected, resultLeft)
             assertEquals(expected, resultRight)
         }
@@ -60,7 +60,7 @@ class TimeTrackingAppTest : FunSpec() {
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val resultOutside = app.getDeveloperHours(start.plusSeconds(7200L)..now.minusSeconds(7200L))
             val resultInside = app.getDeveloperHours(start.plusSeconds(2700L)..now.minusSeconds(2700L))
-            val expected = emptyMap<DeveloperProject, Hours>()
+            val expected = emptyMap<Pair<Developer,Project>, Hours>()
             assertEquals(expected, resultOutside)
             assertEquals(expected, resultInside)
         }
@@ -69,7 +69,7 @@ class TimeTrackingAppTest : FunSpec() {
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val resultStartInsideEndOutside = app.getDeveloperHours(start.plusSeconds(1600L)..now.plusSeconds(1600L))
             val resultStartOutsideEndInside = app.getDeveloperHours(start.minusSeconds(1600L)..now.minusSeconds(1600L))
-            val expected = mapOf(DeveloperProject(developer, project) to Hours(1))
+            val expected = mapOf((developer to project) to Hours(1))
             assertEquals(expected, resultStartInsideEndOutside)
             assertEquals(expected, resultStartOutsideEndInside)
         }
