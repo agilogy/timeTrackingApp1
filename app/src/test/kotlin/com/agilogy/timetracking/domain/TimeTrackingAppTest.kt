@@ -32,7 +32,7 @@ class TimeTrackingAppTest : FunSpec() {
             assertEquals(expected, result)
         }
 
-        xtest("Get hours per developer when range is inside the developer hours") {
+        test("Get hours per developer when range is inside the developer hours") {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val result = app.getDeveloperHours(start.plusSeconds(900)..now.minusSeconds(900))
@@ -46,16 +46,16 @@ class TimeTrackingAppTest : FunSpec() {
             val expected = mapOf((developer to project) to Hours(1))
             assertEquals(expected, result)
         }
-        xtest("Get hours per developer when range is outside the developer hours") {
+        test("Get hours per developer when range is outside the developer hours") {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val resultLeft = app.getDeveloperHours(start.minusSeconds(3600L)..now.minusSeconds(7200L))
             val resultRight = app.getDeveloperHours(start.plusSeconds(7200L)..now.plusSeconds(3600L))
-            val expected = mapOf((developer to project) to Hours(0))
+            val expected = emptyMap<Pair<Developer,Project>, Hours>()
             assertEquals(expected, resultLeft)
             assertEquals(expected, resultRight)
         }
-        xtest("Get hours per developer when range makes no sense") {
+        test("Get hours per developer when range makes no sense") {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val resultOutside = app.getDeveloperHours(start.plusSeconds(7200L)..now.minusSeconds(7200L))
@@ -64,7 +64,7 @@ class TimeTrackingAppTest : FunSpec() {
             assertEquals(expected, resultOutside)
             assertEquals(expected, resultInside)
         }
-        xtest("Get hours per developer when only one part of the range is inside") {
+        test("Get hours per developer when only one part of the range is inside") {
             val timeEntriesRepository = InMemoryTimeEntriesRepository(listOf(TimeEntry(developer, project, start..now)))
             val app = TimeTrackingAppPrd(timeEntriesRepository)
             val resultStartInsideEndOutside = app.getDeveloperHours(start.plusSeconds(1600L)..now.plusSeconds(1600L))

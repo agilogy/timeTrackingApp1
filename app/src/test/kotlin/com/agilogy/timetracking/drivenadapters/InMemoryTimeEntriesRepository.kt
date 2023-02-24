@@ -10,6 +10,7 @@ import com.agilogy.timetracking.domain.TimeEntriesRepository
 import com.agilogy.timetracking.domain.TimeEntry
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList()) : TimeEntriesRepository {
@@ -27,7 +28,7 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
     override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours> =
         state.filterIsIn(range)
             .groupBy({ it.developer to it.project }) { it.duration }
-            .mapValues { Hours(it.value.sum().inWholeHours.toInt()) }
+            .mapValues { Hours(ceil(it.value.sum().inWholeSeconds / 3_600.0).toInt()) }
 
     private fun List<TimeEntry>.filterIsIn(range: ClosedRange<Instant>) = mapNotNull { timeEntry ->
         range.intersection(timeEntry.range)?.let { timeEntry.copy(range = it) }
