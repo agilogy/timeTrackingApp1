@@ -2,13 +2,16 @@ package com.agilogy.timetracking.domain
 
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 
 interface TimeEntriesRepository {
 
     suspend fun saveTimeEntries(timeEntries: List<TimeEntry>)
-    suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<DeveloperProject, Hours>
+    suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours>
     suspend fun getDeveloperHoursByProjectAndDate(
-        developer: String,
+        developer: Developer,
         dateRange: ClosedRange<LocalDate>,
-    ): List<Triple<LocalDate, String, Hours>>
+    ): List<Triple<LocalDate, Project, Hours>>
+
+    suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry>
 }

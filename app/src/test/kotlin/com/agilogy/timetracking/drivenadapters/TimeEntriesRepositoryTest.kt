@@ -5,10 +5,7 @@ import com.agilogy.db.hikari.HikariCp
 import com.agilogy.db.postgresql.PostgreSql
 import com.agilogy.db.sql.Sql.sql
 import com.agilogy.db.sql.Sql.update
-import com.agilogy.timetracking.domain.DeveloperProject
-import com.agilogy.timetracking.domain.Hours
-import com.agilogy.timetracking.domain.TimeEntriesRepository
-import com.agilogy.timetracking.domain.TimeEntry
+import com.agilogy.timetracking.domain.*
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestScope
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -46,6 +43,22 @@ class TimeEntriesRepositoryTest : FunSpec() {
 
     init {
 
+        val today = LocalDate.now()
+        fun at(hour: Int, minute: Int = 0) = today.atTime(hour, minute).toInstant(ZoneOffset.UTC)
+
+        // TODO: Migrate tests using now and start to use at(hour, minute) instead
+        val now = Instant.now()
+        val hours = 1
+        val start = now.minusSeconds(hours * 3600L)
+
+        val developer = Developer("John")
+        val project = Project("Acme Inc.")
+
+        val d1 = Developer("d1")
+        val d2 = Developer("d2")
+        val p = Project("p")
+        val p2 = Project("p2")
+
         beforeTest {
             withTestDataSource(null) { dataSource ->
                 kotlin.runCatching { dataSource.sql { update("create database test") } }
@@ -71,42 +84,101 @@ class TimeEntriesRepositoryTest : FunSpec() {
             }
         }
 
+        fun xtest(name: String, test: suspend TestScope.(TimeEntriesRepository) -> Unit) {
+            super.xtest(name) {}
+        }
+
         test("getHoursByDeveloperAndProject") { repo ->
             val testDay = date(1)
             repo.saveTimeEntries(
                 listOf(
-                    TimeEntry("d1", "p", timePeriod(1, 9, 4)),
-                    TimeEntry("d1", "p", timePeriod(1, 14, 3)),
-                    TimeEntry("d2", "p", timePeriod(1, 10, 3)),
+                    TimeEntry(d1, p, timePeriod(1, 9, 4)),
+                    TimeEntry(d1, p, timePeriod(1, 14, 3)),
+                    TimeEntry(d2, p, timePeriod(1, 10, 3)),
                 )
             )
             assertEquals(
                 mapOf(
-                    DeveloperProject("d1", "p") to Hours(7),
-                    DeveloperProject("d2", "p") to Hours(3),
+                    Pair(d1, p) to Hours(7),
+                    Pair(d2, p) to Hours(3),
                 ),
                 repo.getHoursByDeveloperAndProject(testDay.toLocalInstant()..testDay.plusDays(1).toLocalInstant())
             )
 
         }
 
+        test("Get hours per developer") {repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
+            val result =  repo.getHoursByDeveloperAndProject(start..now)
+            val expected = mapOf((developer to project) to Hours(hours))
+            assertEquals(expected, result)
+        }
+
+        test("Get hours per developer when range is bigger than the developer hours") {repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
+            val result = repo.getHoursByDeveloperAndProject(start.minusSeconds(7200L)..now.plusSeconds(7200L))
+            val expected = mapOf((developer to project) to Hours(1))
+            assertEquals(expected, result)
+        }
+
+        test("Get hours per developer when range makes no sense") {repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
+            val resultOutside = repo.getHoursByDeveloperAndProject(start.plusSeconds(7200L)..now.minusSeconds(7200L))
+            val resultInside = repo.getHoursByDeveloperAndProject(start.plusSeconds(2700L)..now.minusSeconds(2700L))
+            val expected = emptyMap<Pair<Developer,Project>, Hours>()
+            assertEquals(expected, resultOutside)
+            assertEquals(expected, resultInside)
+        }
+
+        test("getHoursByDeveloperAndProject returns the hours in the interval") { repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, at(9)..at(13))))
+            val actual = repo.getHoursByDeveloperAndProject(at(10)..at(12))
+            val expected = mapOf((developer to project) to Hours(2))
+            assertEquals(expected, actual)
+        }
+
+        test("getHoursByDeveloperAndProject rounds properly up") { repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, at(10)..at(10, 30))))
+            val result = repo.getHoursByDeveloperAndProject(at(10)..at(11))
+            val expected = mapOf((developer to project) to Hours(1))
+            assertEquals(expected, result)
+        }
+
+        test("Get hours per developer when range is outside the developer hours") {repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
+            val resultLeft = repo.getHoursByDeveloperAndProject(start.minusSeconds(3600L)..now.minusSeconds(7200L))
+            val resultRight = repo.getHoursByDeveloperAndProject(start.plusSeconds(7200L)..now.plusSeconds(3600L))
+            val expected = emptyMap<Pair<Developer,Project>, Hours>()
+            assertEquals(expected, resultLeft)
+            assertEquals(expected, resultRight)
+        }
+
+        test("Get hours per developer when only one part of the range is inside") { repo ->
+            repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
+            val resultStartInsideEndOutside = repo.getHoursByDeveloperAndProject(start.plusSeconds(1600L)..now.plusSeconds(1600L))
+            val resultStartOutsideEndInside = repo.getHoursByDeveloperAndProject(start.minusSeconds(1600L)..now.minusSeconds(1600L))
+            val expected = mapOf((developer to project) to Hours(1))
+            assertEquals(expected, resultStartInsideEndOutside)
+            assertEquals(expected, resultStartOutsideEndInside)
+        }
+
         test("getDeveloperHoursByProjectAndDate") { repo ->
             repo.saveTimeEntries(
                 listOf(
-                    TimeEntry("d1", "p", timePeriod(1, 9, 1)),
-                    TimeEntry("d1", "p", timePeriod(1, 11, 2)),
-                    TimeEntry("d1", "p2", timePeriod(1, 14, 4)),
-                    TimeEntry("d1", "p", timePeriod(2, 8, 6)),
+                    TimeEntry(d1, p, timePeriod(1, 9, 1)),
+                    TimeEntry(d1, p, timePeriod(1, 11, 2)),
+                    TimeEntry(d1, p2, timePeriod(1, 14, 4)),
+                    TimeEntry(d1, p, timePeriod(2, 8, 6)),
                 )
             )
 
             assertEquals(
                 listOf(
-                    Triple(date(1), "p", Hours(3)),
-                    Triple(date(1), "p2", Hours(4)),
-                    Triple(date(2), "p", Hours(6))
+                    Triple(date(1), p, Hours(3)),
+                    Triple(date(1), p2, Hours(4)),
+                    Triple(date(2), p, Hours(6))
                 ),
-                repo.getDeveloperHoursByProjectAndDate("d1", date(1)..date(2))
+                repo.getDeveloperHoursByProjectAndDate(d1, date(1)..date(2))
             )
 
         }
