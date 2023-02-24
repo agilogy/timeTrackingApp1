@@ -31,5 +31,9 @@ class TimeTrackingAppTest : FunSpec() {
             assertEquals(expected, result)
         }
 
+        // TODO: Test the other methods of the app
+
+        // TODO: Specially test the logic in listTimeEntries
+
     }
 }

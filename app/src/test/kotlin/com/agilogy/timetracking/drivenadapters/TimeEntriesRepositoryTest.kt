@@ -44,12 +44,13 @@ class TimeEntriesRepositoryTest : FunSpec() {
     init {
 
         val today = LocalDate.now()
-
         fun at(hour: Int, minute: Int = 0) = today.atTime(hour, minute).toInstant(ZoneOffset.UTC)
 
+        // TODO: Migrate tests using now and start to use at(hour, minute) instead
         val now = Instant.now()
         val hours = 1
         val start = now.minusSeconds(hours * 3600L)
+
         val developer = Developer("John")
         val project = Project("Acme Inc.")
 
