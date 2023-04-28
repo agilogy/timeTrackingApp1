@@ -1,10 +1,9 @@
 package com.agilogy.timetracking.drivenadapters
 
-import arrow.fx.coroutines.use
 import com.agilogy.db.hikari.HikariCp
 import com.agilogy.db.postgresql.PostgreSql
+import com.agilogy.db.sql.Sql
 import com.agilogy.db.sql.Sql.sql
-import com.agilogy.db.sql.Sql.update
 import com.agilogy.timetracking.domain.*
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestScope
@@ -14,18 +13,33 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.Month
+import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.sql.DataSource
 
 class TimeEntriesRepositoryTest : FunSpec() {
 
     private suspend fun <A> withTestDataSource(database: String? = "test", f: suspend (DataSource) -> A) =
-        HikariCp.dataSource("jdbc:postgresql://localhost/${database ?: ""}", "postgres", "postgres").use {
-                dataSource -> f(dataSource)
+        HikariCp.dataSource("jdbc:postgresql://localhost:5432/${database ?: ""}", "postgres", "postgres").use { dataSource ->
+            f(dataSource)
         }
 
-    private suspend fun <A> withPostgresTestRepo(f: suspend (TimeEntriesRepository) -> A) =
-        withTestDataSource { f(PostgresTimeEntriesRepository(it)) }
+    private suspend fun <A> withPostgresTestRepo(f: suspend (TimeEntriesRepository) -> A) {
+        withTestDataSource(null) { dataSource ->
+            kotlin.runCatching { dataSource.sql { Sql.update("create database test") } }
+                .recoverIf(Unit) { it is PSQLException && it.sqlState == PostgreSql.DuplicateDatabase }.getOrThrow()
+        }
+
+        withTestDataSource { dataSource ->
+            println("Recreating table time_entries")
+            kotlin.runCatching { dataSource.sql { Sql.update("drop table time_entries") } }
+                .recoverIf(Unit) { it is PSQLException && it.sqlState == PostgreSql.UndefinedTable }.getOrThrow()
+            PostgresTimeEntriesRepository.dbMigrations.forEach { dbMigration -> dataSource.sql { Sql.update(dbMigration) } }
+            f(PostgresTimeEntriesRepository(dataSource))
+        }
+
+    }
 
     private suspend fun <A> withInMemoryTestRepo(f: suspend (TimeEntriesRepository) -> A) =
         f(InMemoryTimeEntriesRepository())
@@ -35,7 +49,9 @@ class TimeEntriesRepositoryTest : FunSpec() {
 
     private fun LocalDateTime.toLocalInstant() = atZone(ZoneOffset.systemDefault()).toInstant()
     private fun LocalDate.toLocalInstant() = atTime(0, 0).toLocalInstant()
-    private fun date(day: Int): LocalDate = LocalDate.of(2013, 2, day)
+    val today = LocalDate.of(2023, Month.APRIL, 1)
+    fun at(hour: Int, minute: Int = 0) = today.atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant()
+    private fun date(day: Int): LocalDate = LocalDate.of(2023, Month.APRIL, day)
     private fun timePeriod(day: Int, hourFrom: Int, hours: Int): ClosedRange<Instant> {
         val from = date(day).atTime(LocalTime.of(hourFrom, 0)).toLocalInstant()
         return (from..from.plusSeconds(3600L * hours))
@@ -43,8 +59,6 @@ class TimeEntriesRepositoryTest : FunSpec() {
 
     init {
 
-        val today = LocalDate.now()
-        fun at(hour: Int, minute: Int = 0) = today.atTime(hour, minute).toInstant(ZoneOffset.UTC)
 
         // TODO: Migrate tests using now and start to use at(hour, minute) instead
         val now = Instant.now()
@@ -59,20 +73,6 @@ class TimeEntriesRepositoryTest : FunSpec() {
         val p = Project("p")
         val p2 = Project("p2")
 
-        beforeTest {
-            withTestDataSource(null) { dataSource ->
-                kotlin.runCatching { dataSource.sql { update("create database test") } }
-                    .recoverIf(Unit) { it is PSQLException && it.sqlState == PostgreSql.DuplicateDatabase }.getOrThrow()
-            }
-
-            withTestDataSource { dataSource ->
-                kotlin.runCatching { dataSource.sql { update("drop table time_entries") } }
-                    .recoverIf(Unit) { it is PSQLException && it.sqlState == PostgreSql.UndefinedTable }.getOrThrow()
-                PostgresTimeEntriesRepository.dbMigrations.forEach { dbMigration -> dataSource.sql { update(dbMigration) } }
-            }
-
-        }
-
         fun test(name: String, test: suspend TestScope.(TimeEntriesRepository) -> Unit) {
             context(name) {
                 this.test("Postgres") {
@@ -84,6 +84,7 @@ class TimeEntriesRepositoryTest : FunSpec() {
             }
         }
 
+        @Suppress("UNUSED_PARAMETER")
         fun xtest(name: String, test: suspend TestScope.(TimeEntriesRepository) -> Unit) {
             super.xtest(name) {}
         }
@@ -107,25 +108,25 @@ class TimeEntriesRepositoryTest : FunSpec() {
 
         }
 
-        test("Get hours per developer") {repo ->
+        test("Get hours per developer") { repo ->
             repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
-            val result =  repo.getHoursByDeveloperAndProject(start..now)
+            val result = repo.getHoursByDeveloperAndProject(start..now)
             val expected = mapOf((developer to project) to Hours(hours))
             assertEquals(expected, result)
         }
 
-        test("Get hours per developer when range is bigger than the developer hours") {repo ->
+        test("Get hours per developer when range is bigger than the developer hours") { repo ->
             repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
             val result = repo.getHoursByDeveloperAndProject(start.minusSeconds(7200L)..now.plusSeconds(7200L))
             val expected = mapOf((developer to project) to Hours(1))
             assertEquals(expected, result)
         }
 
-        test("Get hours per developer when range makes no sense") {repo ->
+        test("Get hours per developer when range makes no sense") { repo ->
             repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
             val resultOutside = repo.getHoursByDeveloperAndProject(start.plusSeconds(7200L)..now.minusSeconds(7200L))
             val resultInside = repo.getHoursByDeveloperAndProject(start.plusSeconds(2700L)..now.minusSeconds(2700L))
-            val expected = emptyMap<Pair<Developer,Project>, Hours>()
+            val expected = emptyMap<Pair<Developer, Project>, Hours>()
             assertEquals(expected, resultOutside)
             assertEquals(expected, resultInside)
         }
@@ -144,11 +145,11 @@ class TimeEntriesRepositoryTest : FunSpec() {
             assertEquals(expected, result)
         }
 
-        test("Get hours per developer when range is outside the developer hours") {repo ->
+        test("Get hours per developer when range is outside the developer hours") { repo ->
             repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
             val resultLeft = repo.getHoursByDeveloperAndProject(start.minusSeconds(3600L)..now.minusSeconds(7200L))
             val resultRight = repo.getHoursByDeveloperAndProject(start.plusSeconds(7200L)..now.plusSeconds(3600L))
-            val expected = emptyMap<Pair<Developer,Project>, Hours>()
+            val expected = emptyMap<Pair<Developer, Project>, Hours>()
             assertEquals(expected, resultLeft)
             assertEquals(expected, resultRight)
         }
