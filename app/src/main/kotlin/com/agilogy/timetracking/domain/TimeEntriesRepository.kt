@@ -2,7 +2,6 @@ package com.agilogy.timetracking.domain
 
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 
 interface TimeEntriesRepository {
 

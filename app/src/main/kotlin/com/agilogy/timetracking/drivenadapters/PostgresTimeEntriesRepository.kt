@@ -61,7 +61,7 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
 
     override suspend fun getDeveloperHoursByProjectAndDate(
         developer: Developer,
-        dateRange: ClosedRange<LocalDate>
+        dateRange: ClosedRange<LocalDate>,
     ): List<Triple<LocalDate, Project, Hours>> = dataSource.sql {
         val instantRange = dateRange.toInstantRange()
         val sql = """select date(start at time zone 'CEST'), project, extract(EPOCH from sum("end" - start)) 

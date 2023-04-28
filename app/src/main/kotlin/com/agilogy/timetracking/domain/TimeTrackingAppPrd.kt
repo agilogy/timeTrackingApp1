@@ -40,5 +40,5 @@ class TimeTrackingAppPrd(private val timeEntriesRepository: TimeEntriesRepositor
             }
             res
         }
-            }
+    }
 }

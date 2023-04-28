@@ -41,7 +41,7 @@ object Sql {
                         transactionIsolation = isolationLevel.value
                         f(this).also { commit() }
                     }
-                }finally{
+                } finally {
                     it.autoCommit = previousAutoCommit
                 }
             }

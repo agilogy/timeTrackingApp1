@@ -36,7 +36,7 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
 
     override suspend fun getDeveloperHoursByProjectAndDate(
         developer: Developer,
-        dateRange: ClosedRange<LocalDate>
+        dateRange: ClosedRange<LocalDate>,
     ): List<Triple<LocalDate, Project, Hours>> =
         state
             .filter { it.developer == developer }
@@ -45,7 +45,7 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
             .mapValues { Hours(((it.value.sum().inWholeSeconds) / 3600.0).roundToInt()) }
             .map { (k, v) -> Triple(k.first, k.second, v) }
 
-    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry>  =
+    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry> =
         state
             .filter { timeEntry -> developer?.let { it == timeEntry.developer } ?: true }
             .filterIsIn(timeRange)

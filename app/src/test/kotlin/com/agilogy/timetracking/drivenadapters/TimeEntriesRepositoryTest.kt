@@ -38,7 +38,6 @@ class TimeEntriesRepositoryTest : FunSpec() {
             PostgresTimeEntriesRepository.dbMigrations.forEach { dbMigration -> dataSource.sql { Sql.update(dbMigration) } }
             f(PostgresTimeEntriesRepository(dataSource))
         }
-
     }
 
     private suspend fun <A> withInMemoryTestRepo(f: suspend (TimeEntriesRepository) -> A) =
@@ -58,7 +57,6 @@ class TimeEntriesRepositoryTest : FunSpec() {
     }
 
     init {
-
 
         // TODO: Migrate tests using now and start to use at(hour, minute) instead
         val now = Instant.now()

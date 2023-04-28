@@ -23,8 +23,9 @@ class ArgsParser {
         } else if (arg(0) == "list") {
             ListTimeEntries(parseMonth(arg(1)), args.getOrElse(2) { null }?.let { Developer(it) })
         } else if (arg(0) == "add") {
-            AddTimeEntry(Developer(arg(1)), Project(arg(2)),
-                         parseInstant(arg(3))..parseInstant(arg(4))
+            AddTimeEntry(
+                Developer(arg(1)), Project(arg(2)),
+                parseInstant(arg(3))..parseInstant(arg(4))
             )
         } else raise(ArgsParseError("Unknown command ${arg(0)}"))
     }
