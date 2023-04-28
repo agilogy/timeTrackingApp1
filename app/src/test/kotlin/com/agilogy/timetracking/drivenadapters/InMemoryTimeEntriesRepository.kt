@@ -3,9 +3,9 @@ package com.agilogy.timetracking.drivenadapters
 import com.agilogy.time.intersection
 import com.agilogy.time.sum
 import com.agilogy.time.toInstantRange
-import com.agilogy.timetracking.domain.Developer
+import com.agilogy.timetracking.domain.DeveloperName
 import com.agilogy.timetracking.domain.Hours
-import com.agilogy.timetracking.domain.Project
+import com.agilogy.timetracking.domain.ProjectName
 import com.agilogy.timetracking.domain.TimeEntriesRepository
 import com.agilogy.timetracking.domain.TimeEntry
 import java.time.Instant
@@ -25,7 +25,7 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
         state.addAll(timeEntries)
     }
 
-    override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours> =
+    override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<DeveloperName, ProjectName>, Hours> =
         state.filterIsIn(range)
             .groupBy({ it.developer to it.project }) { it.duration }
             .mapValues { Hours(ceil(it.value.sum().inWholeSeconds / 3_600.0).toInt()) }
@@ -35,9 +35,9 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
     }
 
     override suspend fun getDeveloperHoursByProjectAndDate(
-        developer: Developer,
+        developer: DeveloperName,
         dateRange: ClosedRange<LocalDate>,
-    ): List<Triple<LocalDate, Project, Hours>> =
+    ): List<Triple<LocalDate, ProjectName, Hours>> =
         state
             .filter { it.developer == developer }
             .filterIsIn(dateRange.toInstantRange())
@@ -45,7 +45,7 @@ class InMemoryTimeEntriesRepository(initialState: List<TimeEntry> = emptyList())
             .mapValues { Hours(((it.value.sum().inWholeSeconds) / 3600.0).roundToInt()) }
             .map { (k, v) -> Triple(k.first, k.second, v) }
 
-    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry> =
+    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: DeveloperName?): List<TimeEntry> =
         state
             .filter { timeEntry -> developer?.let { it == timeEntry.developer } ?: true }
             .filterIsIn(timeRange)

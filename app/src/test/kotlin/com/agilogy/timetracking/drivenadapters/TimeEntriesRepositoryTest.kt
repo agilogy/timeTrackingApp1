@@ -63,13 +63,13 @@ class TimeEntriesRepositoryTest : FunSpec() {
         val hours = 1
         val start = now.minusSeconds(hours * 3600L)
 
-        val developer = Developer("John")
-        val project = Project("Acme Inc.")
+        val developer = DeveloperName("John")
+        val project = ProjectName("Acme Inc.")
 
-        val d1 = Developer("d1")
-        val d2 = Developer("d2")
-        val p = Project("p")
-        val p2 = Project("p2")
+        val d1 = DeveloperName("d1")
+        val d2 = DeveloperName("d2")
+        val p = ProjectName("p")
+        val p2 = ProjectName("p2")
 
         fun test(name: String, test: suspend TestScope.(TimeEntriesRepository) -> Unit) {
             context(name) {
@@ -124,7 +124,7 @@ class TimeEntriesRepositoryTest : FunSpec() {
             repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
             val resultOutside = repo.getHoursByDeveloperAndProject(start.plusSeconds(7200L)..now.minusSeconds(7200L))
             val resultInside = repo.getHoursByDeveloperAndProject(start.plusSeconds(2700L)..now.minusSeconds(2700L))
-            val expected = emptyMap<Pair<Developer, Project>, Hours>()
+            val expected = emptyMap<Pair<DeveloperName, ProjectName>, Hours>()
             assertEquals(expected, resultOutside)
             assertEquals(expected, resultInside)
         }
@@ -147,7 +147,7 @@ class TimeEntriesRepositoryTest : FunSpec() {
             repo.saveTimeEntries(listOf(TimeEntry(developer, project, start..now)))
             val resultLeft = repo.getHoursByDeveloperAndProject(start.minusSeconds(3600L)..now.minusSeconds(7200L))
             val resultRight = repo.getHoursByDeveloperAndProject(start.plusSeconds(7200L)..now.plusSeconds(3600L))
-            val expected = emptyMap<Pair<Developer, Project>, Hours>()
+            val expected = emptyMap<Pair<DeveloperName, ProjectName>, Hours>()
             assertEquals(expected, resultLeft)
             assertEquals(expected, resultRight)
         }

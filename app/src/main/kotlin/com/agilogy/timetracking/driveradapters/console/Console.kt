@@ -1,9 +1,9 @@
 package com.agilogy.timetracking.driveradapters.console
 
 import arrow.core.Tuple4
-import com.agilogy.timetracking.domain.Developer
+import com.agilogy.timetracking.domain.DeveloperName
 import com.agilogy.timetracking.domain.Hours
-import com.agilogy.timetracking.domain.Project
+import com.agilogy.timetracking.domain.ProjectName
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.math.max
@@ -12,7 +12,7 @@ class Console {
 
     fun printHelp(message: String): Unit = println(message)
 
-    fun print(report: Map<Pair<Developer, Project>, Hours>) {
+    fun print(report: Map<Pair<DeveloperName, ProjectName>, Hours>) {
         val table = table(
             report.map { (dp, hours) -> listOf(dp.first.name, dp.second.name, hours.value.toString()) },
             "Developer", "Project", "Hours"
@@ -20,7 +20,7 @@ class Console {
         println(table)
     }
 
-    fun print(report: List<Triple<LocalDate, Project, Hours>>) {
+    fun print(report: List<Triple<LocalDate, ProjectName, Hours>>) {
         val table = table(
             report.map { (date, project, hours) -> listOf(date.toString(), project.name, hours.value.toString()) },
             "Date", "Project", "Hours"
@@ -38,7 +38,7 @@ class Console {
 
     private operator fun String.times(n: Int): String = repeat(n)
 
-    fun printTimeEntries(listTimeEntries: List<Tuple4<Developer, Project, LocalDate, ClosedRange<LocalTime>>>): Unit = println(
+    fun printTimeEntries(listTimeEntries: List<Tuple4<DeveloperName, ProjectName, LocalDate, ClosedRange<LocalTime>>>): Unit = println(
         table(
             listTimeEntries.map { (developer, project, date, range) ->
                 listOf(

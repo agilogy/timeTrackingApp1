@@ -1,8 +1,8 @@
 package com.agilogy.timetracking.driveradapters.console
 
 import arrow.core.raise.Raise
-import com.agilogy.timetracking.domain.Developer
-import com.agilogy.timetracking.domain.Project
+import com.agilogy.timetracking.domain.DeveloperName
+import com.agilogy.timetracking.domain.ProjectName
 import java.time.Instant
 import java.time.YearMonth
 
@@ -18,13 +18,13 @@ class ArgsParser {
         else if (arg(0) == "report") when (args.size - 1) {
             0 -> GlobalReport(YearMonth.now())
             1 -> GlobalReport(parseMonth(arg(1)))
-            2 -> DeveloperReport(parseMonth(arg(1)), Developer(arg(2)))
+            2 -> DeveloperReport(parseMonth(arg(1)), DeveloperName(arg(2)))
             else -> raise(ArgsParseError("Invalid number of arguments for command ${arg(0)}"))
         } else if (arg(0) == "list") {
-            ListTimeEntries(parseMonth(arg(1)), args.getOrElse(2) { null }?.let { Developer(it) })
+            ListTimeEntries(parseMonth(arg(1)), args.getOrElse(2) { null }?.let { DeveloperName(it) })
         } else if (arg(0) == "add") {
             AddTimeEntry(
-                Developer(arg(1)), Project(arg(2)),
+                DeveloperName(arg(1)), ProjectName(arg(2)),
                 parseInstant(arg(3))..parseInstant(arg(4))
             )
         } else raise(ArgsParseError("Unknown command ${arg(0)}"))

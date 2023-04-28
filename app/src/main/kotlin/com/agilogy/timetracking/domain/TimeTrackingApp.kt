@@ -7,13 +7,13 @@ import java.time.LocalTime
 
 interface TimeTrackingApp {
 
-    suspend fun saveTimeEntries(developer: Developer, timeEntries: List<Pair<Project, ClosedRange<Instant>>>)
-    suspend fun getDeveloperHours(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours>
-    suspend fun getDeveloperHoursByProjectAndDate(developer: Developer, dateRange: ClosedRange<LocalDate>):
-            List<Triple<LocalDate, Project, Hours>>
+    suspend fun saveTimeEntries(developer: DeveloperName, timeEntries: List<Pair<ProjectName, ClosedRange<Instant>>>)
+    suspend fun getDeveloperHours(range: ClosedRange<Instant>): Map<Pair<DeveloperName, ProjectName>, Hours>
+    suspend fun getDeveloperHoursByProjectAndDate(developer: DeveloperName, dateRange: ClosedRange<LocalDate>):
+            List<Triple<LocalDate, ProjectName, Hours>>
 
-    suspend fun listTimeEntries(dateRange: ClosedRange<LocalDate>, developer: Developer?):
-            List<Tuple4<Developer, Project, LocalDate, ClosedRange<LocalTime>>>
+    suspend fun listTimeEntries(dateRange: ClosedRange<LocalDate>, developer: DeveloperName?):
+            List<Tuple4<DeveloperName, ProjectName, LocalDate, ClosedRange<LocalTime>>>
 }
 
 @JvmInline

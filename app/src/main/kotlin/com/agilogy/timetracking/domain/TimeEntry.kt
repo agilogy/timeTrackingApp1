@@ -6,13 +6,13 @@ import java.time.LocalDate
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 
-data class TimeEntry(val developer: Developer, val project: Project, val range: ClosedRange<Instant>) {
+data class TimeEntry(val developer: DeveloperName, val project: ProjectName, val range: ClosedRange<Instant>) {
     val duration: Duration = java.time.Duration.between(range.start, range.endInclusive.plusNanos(1)).toKotlinDuration()
     val localDate: LocalDate by lazy { range.start.localDate() }
 }
 
 @JvmInline
-value class Developer(val name: String)
+value class DeveloperName(val name: String)
 
 @JvmInline
-value class Project(val name: String)
+value class ProjectName(val name: String)

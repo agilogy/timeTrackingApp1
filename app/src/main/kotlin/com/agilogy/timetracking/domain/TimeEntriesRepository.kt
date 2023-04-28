@@ -6,11 +6,11 @@ import java.time.LocalDate
 interface TimeEntriesRepository {
 
     suspend fun saveTimeEntries(timeEntries: List<TimeEntry>)
-    suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours>
+    suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<DeveloperName, ProjectName>, Hours>
     suspend fun getDeveloperHoursByProjectAndDate(
-        developer: Developer,
+        developer: DeveloperName,
         dateRange: ClosedRange<LocalDate>,
-    ): List<Triple<LocalDate, Project, Hours>>
+    ): List<Triple<LocalDate, ProjectName, Hours>>
 
-    suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry>
+    suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: DeveloperName?): List<TimeEntry>
 }

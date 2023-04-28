@@ -7,9 +7,9 @@ import com.agilogy.db.sql.Sql.sql
 import com.agilogy.db.sql.SqlParameter
 import com.agilogy.db.sql.param
 import com.agilogy.time.toInstantRange
-import com.agilogy.timetracking.domain.Developer
+import com.agilogy.timetracking.domain.DeveloperName
 import com.agilogy.timetracking.domain.Hours
-import com.agilogy.timetracking.domain.Project
+import com.agilogy.timetracking.domain.ProjectName
 import com.agilogy.timetracking.domain.TimeEntriesRepository
 import com.agilogy.timetracking.domain.TimeEntry
 import java.time.Instant
@@ -19,10 +19,10 @@ import kotlin.math.ceil
 
 class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEntriesRepository {
 
-    private val Developer.param: SqlParameter get() = name.param
-    private val Project.param: SqlParameter get() = name.param
-    private fun ResultSetView.developer(columnIndex: Int): Developer? = string(columnIndex)?.let { Developer(it) }
-    private fun ResultSetView.project(columnIndex: Int): Project? = string(columnIndex)?.let { Project(it) }
+    private val DeveloperName.param: SqlParameter get() = name.param
+    private val ProjectName.param: SqlParameter get() = name.param
+    private fun ResultSetView.developer(columnIndex: Int): DeveloperName? = string(columnIndex)?.let { DeveloperName(it) }
+    private fun ResultSetView.project(columnIndex: Int): ProjectName? = string(columnIndex)?.let { ProjectName(it) }
 
     companion object {
         val dbMigrations = listOf(
@@ -49,7 +49,7 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
         Unit
     }
 
-    override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours> = dataSource.sql {
+    override suspend fun getHoursByDeveloperAndProject(range: ClosedRange<Instant>): Map<Pair<DeveloperName, ProjectName>, Hours> = dataSource.sql {
         val sql = """select developer, project, extract(EPOCH from sum(least("end", ?) - greatest(start, ?))) 
             |from time_entries 
             |where "end" > ? and start < ?
@@ -60,9 +60,9 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
     }
 
     override suspend fun getDeveloperHoursByProjectAndDate(
-        developer: Developer,
+        developer: DeveloperName,
         dateRange: ClosedRange<LocalDate>,
-    ): List<Triple<LocalDate, Project, Hours>> = dataSource.sql {
+    ): List<Triple<LocalDate, ProjectName, Hours>> = dataSource.sql {
         val instantRange = dateRange.toInstantRange()
         val sql = """select date(start at time zone 'CEST'), project, extract(EPOCH from sum("end" - start)) 
             |from time_entries 
@@ -75,7 +75,7 @@ class PostgresTimeEntriesRepository(private val dataSource: DataSource) : TimeEn
         }
     }
 
-    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: Developer?): List<TimeEntry> = dataSource.sql {
+    override suspend fun listTimeEntries(timeRange: ClosedRange<Instant>, developer: DeveloperName?): List<TimeEntry> = dataSource.sql {
         val sql = """select developer, project, start, "end" 
             |from time_entries 
             |where "end" > ? and start < ?""".trimMargin()

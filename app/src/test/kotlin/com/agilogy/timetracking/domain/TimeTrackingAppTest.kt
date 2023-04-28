@@ -10,8 +10,8 @@ class TimeTrackingAppTest : FunSpec() {
         val now = Instant.now()
         val hours = 1
         val start = now.minusSeconds(hours * 3600L)
-        val developer = Developer("John")
-        val project = Project("Acme Inc.")
+        val developer = DeveloperName("John")
+        val project = ProjectName("Acme Inc.")
 
 
         test("Save time entries") {

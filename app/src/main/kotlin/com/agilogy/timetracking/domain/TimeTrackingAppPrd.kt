@@ -10,19 +10,19 @@ import java.time.LocalTime
 
 class TimeTrackingAppPrd(private val timeEntriesRepository: TimeEntriesRepository) : TimeTrackingApp {
 
-    override suspend fun saveTimeEntries(developer: Developer, timeEntries: List<Pair<Project, ClosedRange<Instant>>>) {
+    override suspend fun saveTimeEntries(developer: DeveloperName, timeEntries: List<Pair<ProjectName, ClosedRange<Instant>>>) {
         timeEntriesRepository.saveTimeEntries(timeEntries.map { TimeEntry(developer, it.first, it.second) })
     }
 
-    override suspend fun getDeveloperHours(range: ClosedRange<Instant>): Map<Pair<Developer, Project>, Hours> =
+    override suspend fun getDeveloperHours(range: ClosedRange<Instant>): Map<Pair<DeveloperName, ProjectName>, Hours> =
         timeEntriesRepository.getHoursByDeveloperAndProject(range)
 
-    override suspend fun getDeveloperHoursByProjectAndDate(developer: Developer, dateRange: ClosedRange<LocalDate>):
-            List<Triple<LocalDate, Project, Hours>> =
+    override suspend fun getDeveloperHoursByProjectAndDate(developer: DeveloperName, dateRange: ClosedRange<LocalDate>):
+            List<Triple<LocalDate, ProjectName, Hours>> =
         timeEntriesRepository.getDeveloperHoursByProjectAndDate(developer, dateRange)
 
-    override suspend fun listTimeEntries(dateRange: ClosedRange<LocalDate>, developer: Developer?):
-            List<Tuple4<Developer, Project, LocalDate, ClosedRange<LocalTime>>> {
+    override suspend fun listTimeEntries(dateRange: ClosedRange<LocalDate>, developer: DeveloperName?):
+            List<Tuple4<DeveloperName, ProjectName, LocalDate, ClosedRange<LocalTime>>> {
         val timeEntries = timeEntriesRepository.listTimeEntries(dateRange.toInstantRange(), developer)
         return timeEntries.flatMap { timeEntry ->
             fun row(date: LocalDate, range: ClosedRange<LocalTime>) =
