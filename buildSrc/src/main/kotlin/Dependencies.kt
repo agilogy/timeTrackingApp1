@@ -1,7 +1,7 @@
 object Dependencies {
 
     val arrowKt = "io.arrow-kt"
-    val arrowVersion = "2.0.0-SNAPSHOT"
+    val arrowVersion = "1.1.6-alpha.57"
     val arrowCore = "$arrowKt:arrow-core:$arrowVersion"
     val arrowFxCoroutines = "$arrowKt:arrow-fx-coroutines:$arrowVersion"
     val arrowFxStm = "$arrowKt:arrow-fx-stm:$arrowVersion"
