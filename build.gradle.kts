@@ -2,8 +2,6 @@ import Dependencies.arrowCore
 import Dependencies.arrowFxCoroutines
 import Dependencies.kotestRunnerJunit
 import Dependencies.kotlinXCoroutinesCore
-import Dependencies.kotlinXSerializationJson
-import Dependencies.ktorServerNetty
 
 plugins {
     (kotlin("jvm") version "1.8.21") apply false
