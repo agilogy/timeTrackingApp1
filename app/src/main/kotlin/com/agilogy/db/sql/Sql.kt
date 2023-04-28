@@ -31,13 +31,18 @@ object Sql {
         }
     }
 
-    suspend fun <A> DataSource.sqlTransaction(isolationLevel: TransactionIsolationLevel, f: context(Connection) () -> A): A =
+    suspend fun <A> DataSource.transaction(isolationLevel: TransactionIsolationLevel, f: context(Connection) () -> A): A =
         withContext(Dispatchers.IO) {
             connection.use {
-                with(it) {
-                    autoCommit = false
-                    transactionIsolation = isolationLevel.value
-                    f(this).also { commit() }
+                val previousAutoCommit = it.autoCommit
+                try {
+                    with(it) {
+                        autoCommit = false
+                        transactionIsolation = isolationLevel.value
+                        f(this).also { commit() }
+                    }
+                }finally{
+                    it.autoCommit = previousAutoCommit
                 }
             }
         }

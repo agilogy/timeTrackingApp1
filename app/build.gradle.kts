@@ -7,11 +7,11 @@ import Dependencies.kotlinXSerializationJson
 import Dependencies.postgresql
 
 plugins {
-    kotlin("jvm") version "1.8.10"
-    `java-library`
+    kotlin("jvm") version "1.8.21"
+    application
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(8)) } }
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
 repositories {
     mavenCentral()
@@ -25,7 +25,11 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
+}
+
+application {
+    mainClass.set("com.agilogy.timetracking.driveradapters.console.ConsoleAppKt")
 }
 
 dependencies {
