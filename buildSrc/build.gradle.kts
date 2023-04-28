@@ -3,8 +3,8 @@ repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(8)) } }
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.8.21"
 }

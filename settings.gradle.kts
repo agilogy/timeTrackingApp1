@@ -1,10 +1,4 @@
-/*
- * The settings file is used to specify which projects to include in your build.
- *
- * Detailed information about configuring a multi-project build in Gradle can be found
- * in the user manual at https://docs.gradle.org/7.6/userguide/multi_project_builds.html
- * This project uses @Incubating APIs which are subject to change.
- */
+rootProject.name = "listings"
 
 plugins {
     id("com.gradle.enterprise") version ("3.9")
@@ -25,5 +19,15 @@ gradleEnterprise {
 rootProject.name = "timeTrackingApp"
 include("app")
 
+val components = File("${rootDir}/components/").listFiles()!!.filter { it.isDirectory }.map { it.name }
+components.forEach { configureProject(it, "components") }
 
+val libs = File("${rootDir}/libs/").listFiles()!!.filter { it.isDirectory }.map { it.name }
+libs.forEach { configureProject(it, "libs") }
+
+fun configureProject(name: String, path: String) {
+    println("Configuring project $name with path $path")
+    include(":$name")
+    project(":$name").projectDir = File("$path/$name")
+}
 
