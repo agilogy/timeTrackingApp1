@@ -33,4 +33,7 @@ object Dependencies {
     val zaxxer = "com.zaxxer"
     val hikariCpVersion = "5.0.1"
     val hikariCp = "$zaxxer:HikariCP:$hikariCpVersion"
+
+    val slf4jVersion = "2.0.7"
+    val slf4jProvider = "org.slf4j:slf4j-jdk14:$slf4jVersion"
 }

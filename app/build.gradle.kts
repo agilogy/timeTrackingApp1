@@ -2,6 +2,7 @@ import Dependencies.hikariCp
 import Dependencies.kotestRunnerJunit
 import Dependencies.ktorServerNetty
 import Dependencies.postgresql
+import Dependencies.slf4jProvider
 import Dependencies.suspendApp
 import Dependencies.suspendAppKtor
 
@@ -14,6 +15,7 @@ application {
 }
 
 dependencies {
+    implementation(slf4jProvider)
     implementation(postgresql)
     implementation(ktorServerNetty)
     implementation(project(":db"))

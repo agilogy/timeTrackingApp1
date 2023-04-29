@@ -26,7 +26,6 @@ val libs = File("${rootDir}/libs/").listFiles()!!.filter { it.isDirectory }.map 
 libs.forEach { configureProject(it, "libs") }
 
 fun configureProject(name: String, path: String) {
-    println("Configuring project $name with path $path")
     include(":$name")
     project(":$name").projectDir = File("$path/$name")
 }
