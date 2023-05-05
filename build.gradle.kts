@@ -16,6 +16,9 @@ allprojects {
     group = "com.agilogy"
     version = "1.0-SNAPSHOT"
 
+    // TODO: Code linting
+    // TODO: Code formatting
+
     repositories {
         mavenCentral()
     }
