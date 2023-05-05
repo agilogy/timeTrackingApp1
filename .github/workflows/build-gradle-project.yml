@@ -1,7 +1,6 @@
-name: pull-request
+name: Build and test
 
-on:
-  push:
+on: [push,pull_request]
 
 jobs:
   test:
