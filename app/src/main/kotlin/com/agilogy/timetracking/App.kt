@@ -9,7 +9,7 @@ import java.util.logging.LogManager
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 
-fun App(
+fun app(
     context: CoroutineContext = Dispatchers.Default,
     timeout: Duration = Duration.INFINITE,
     block: suspend context(CoroutineScope, ResourceScope) () -> Unit,
